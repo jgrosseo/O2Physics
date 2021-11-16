@@ -53,46 +53,48 @@ static constexpr float cfgPairCutDefaults[1][5] = {{-1, -1, -1, -1, -1}};
 
 struct CorrelationTask {
 
-  // Configuration
-  O2_DEFINE_CONFIGURABLE(cfgCutVertex, float, 7.0f, "Accepted z-vertex range")
-  O2_DEFINE_CONFIGURABLE(cfgCutPt, float, 0.5f, "Minimal pT for tracks")
-  O2_DEFINE_CONFIGURABLE(cfgCutEta, float, 0.8f, "Eta range for tracks")
+  struct Config {
+    // Configuration
+    O2_DEFINE_CONFIGURABLE(cfgCutVertex, float, 7.0f, "Accepted z-vertex range")
+    O2_DEFINE_CONFIGURABLE(cfgCutPt, float, 0.5f, "Minimal pT for tracks")
+    O2_DEFINE_CONFIGURABLE(cfgCutEta, float, 0.8f, "Eta range for tracks")
 
-  O2_DEFINE_CONFIGURABLE(cfgPtOrder, int, 1, "Only consider pairs for which pT,1 < pT,2 (0 = OFF, 1 = ON)");
-  O2_DEFINE_CONFIGURABLE(cfgTriggerCharge, int, 0, "Select on charge of trigger particle: 0 = all; 1 = positive; -1 = negative");
-  O2_DEFINE_CONFIGURABLE(cfgAssociatedCharge, int, 0, "Select on charge of associated particle: 0 = all; 1 = positive; -1 = negative");
-  O2_DEFINE_CONFIGURABLE(cfgPairCharge, int, 0, "Select on charge of particle pair: 0 = all; 1 = like sign; -1 = unlike sign");
+    O2_DEFINE_CONFIGURABLE(cfgPtOrder, int, 1, "Only consider pairs for which pT,1 < pT,2 (0 = OFF, 1 = ON)");
+    O2_DEFINE_CONFIGURABLE(cfgTriggerCharge, int, 0, "Select on charge of trigger particle: 0 = all; 1 = positive; -1 = negative");
+    O2_DEFINE_CONFIGURABLE(cfgAssociatedCharge, int, 0, "Select on charge of associated particle: 0 = all; 1 = positive; -1 = negative");
+    O2_DEFINE_CONFIGURABLE(cfgPairCharge, int, 0, "Select on charge of particle pair: 0 = all; 1 = like sign; -1 = unlike sign");
 
-  O2_DEFINE_CONFIGURABLE(cfgTwoTrackCut, float, -1, "Two track cut: -1 = off; >0 otherwise distance value (suggested: 0.02)");
-  O2_DEFINE_CONFIGURABLE(cfgTwoTrackCutMinRadius, float, 0.8f, "Two track cut: radius in m from which two track cuts are applied");
+    O2_DEFINE_CONFIGURABLE(cfgTwoTrackCut, float, -1, "Two track cut: -1 = off; >0 otherwise distance value (suggested: 0.02)");
+    O2_DEFINE_CONFIGURABLE(cfgTwoTrackCutMinRadius, float, 0.8f, "Two track cut: radius in m from which two track cuts are applied");
 
-  // Suggested values: Photon: 0.004; K0 and Lambda: 0.005
-  Configurable<LabeledArray<float>> cfgPairCut{"cfgPairCut", {cfgPairCutDefaults[0], 5, {"Photon", "K0", "Lambda", "Phi", "Rho"}}, "Pair cuts on various particles"};
+    // Suggested values: Photon: 0.004; K0 and Lambda: 0.005
+    Configurable<LabeledArray<float>> cfgPairCut{"cfgPairCut", {cfgPairCutDefaults[0], 5, {"Photon", "K0", "Lambda", "Phi", "Rho"}}, "Pair cuts on various particles"};
 
-  O2_DEFINE_CONFIGURABLE(cfgEfficiencyTrigger, std::string, "", "CCDB path to efficiency object for trigger particles")
-  O2_DEFINE_CONFIGURABLE(cfgEfficiencyAssociated, std::string, "", "CCDB path to efficiency object for associated particles")
+    O2_DEFINE_CONFIGURABLE(cfgEfficiencyTrigger, std::string, "", "CCDB path to efficiency object for trigger particles")
+    O2_DEFINE_CONFIGURABLE(cfgEfficiencyAssociated, std::string, "", "CCDB path to efficiency object for associated particles")
 
-  O2_DEFINE_CONFIGURABLE(cfgNoMixedEvents, int, 5, "Number of mixed events per event")
+    O2_DEFINE_CONFIGURABLE(cfgNoMixedEvents, int, 5, "Number of mixed events per event")
 
-  ConfigurableAxis axisVertex{"axisVertex", {7, -7, 7}, "vertex axis for histograms"};
-  ConfigurableAxis axisDeltaPhi{"axisDeltaPhi", {72, -PIHalf, PIHalf * 3}, "delta phi axis for histograms"};
-  ConfigurableAxis axisDeltaEta{"axisDeltaEta", {40, -2, 2}, "delta eta axis for histograms"};
-  ConfigurableAxis axisPtTrigger{"axisPtTrigger", {VARIABLE_WIDTH, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 10.0}, "pt trigger axis for histograms"};
-  ConfigurableAxis axisPtAssoc{"axisPtAssoc", {VARIABLE_WIDTH, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0}, "pt associated axis for histograms"};
-  ConfigurableAxis axisMultiplicity{"axisMultiplicity", {VARIABLE_WIDTH, 0, 5, 10, 20, 30, 40, 50, 100.1}, "multiplicity / centrality axis for histograms"};
+    ConfigurableAxis axisVertex{"axisVertex", {7, -7, 7}, "vertex axis for histograms"};
+    ConfigurableAxis axisDeltaPhi{"axisDeltaPhi", {72, -PIHalf, PIHalf * 3}, "delta phi axis for histograms"};
+    ConfigurableAxis axisDeltaEta{"axisDeltaEta", {40, -2, 2}, "delta eta axis for histograms"};
+    ConfigurableAxis axisPtTrigger{"axisPtTrigger", {VARIABLE_WIDTH, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 10.0}, "pt trigger axis for histograms"};
+    ConfigurableAxis axisPtAssoc{"axisPtAssoc", {VARIABLE_WIDTH, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0}, "pt associated axis for histograms"};
+    ConfigurableAxis axisMultiplicity{"axisMultiplicity", {VARIABLE_WIDTH, 0, 5, 10, 20, 30, 40, 50, 100.1}, "multiplicity / centrality axis for histograms"};
 
-  ConfigurableAxis axisVertexEfficiency{"axisVertexEfficiency", {10, -10, 10}, "vertex axis for efficiency histograms"};
-  ConfigurableAxis axisEtaEfficiency{"axisEtaEfficiency", {20, -1.0, 1.0}, "eta axis for efficiency histograms"};
-  ConfigurableAxis axisPtEfficiency{"axisPtEfficiency", {VARIABLE_WIDTH, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0}, "pt axis for efficiency histograms"};
+    ConfigurableAxis axisVertexEfficiency{"axisVertexEfficiency", {10, -10, 10}, "vertex axis for efficiency histograms"};
+    ConfigurableAxis axisEtaEfficiency{"axisEtaEfficiency", {20, -1.0, 1.0}, "eta axis for efficiency histograms"};
+    ConfigurableAxis axisPtEfficiency{"axisPtEfficiency", {VARIABLE_WIDTH, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0}, "pt axis for efficiency histograms"};
+  } config;
 
   // This filter is applied to AOD and derived data (column names are identical)
-  Filter collisionZVtxFilter = nabs(aod::collision::posZ) < cfgCutVertex;
+  Filter collisionZVtxFilter = nabs(aod::collision::posZ) < config.cfgCutVertex;
   // This filter is only applied to AOD
   Filter collisionVertexTypeFilter = (aod::collision::flags & (uint16_t)aod::collision::CollisionFlagsRun2::Run2VertexerTracks) == (uint16_t)aod::collision::CollisionFlagsRun2::Run2VertexerTracks;
 
   // Track filters
-  Filter trackFilter = (nabs(aod::track::eta) < cfgCutEta) && (aod::track::pt > cfgCutPt) && ((aod::track::isGlobalTrack == (uint8_t) true) || (aod::track::isGlobalTrackSDD == (uint8_t) true));
-  Filter cfTrackFilter = (nabs(aod::cftrack::eta) < cfgCutEta) && (aod::cftrack::pt > cfgCutPt);
+  Filter trackFilter = (nabs(aod::track::eta) < config.cfgCutEta) && (aod::track::pt > config.cfgCutPt) && ((aod::track::isGlobalTrack == (uint8_t) true) || (aod::track::isGlobalTrackSDD == (uint8_t) true));
+  Filter cfTrackFilter = (nabs(aod::cftrack::eta) < config.cfgCutEta) && (aod::cftrack::pt > config.cfgCutPt);
 
   using aodTracks = soa::Filtered<soa::Join<aod::Tracks, aod::TrackSelection>>;
   using derivedTracks = soa::Filtered<aod::CFTracks>;
@@ -101,7 +103,7 @@ struct CorrelationTask {
   OutputObj<CorrelationContainer> same{"sameEvent"};
   OutputObj<CorrelationContainer> mixed{"mixedEvent"};
 
-  struct Config {
+  struct Config_ {
     bool mPairCuts = false;
     THn* mEfficiencyTrigger = nullptr;
     THn* mEfficiencyAssociated = nullptr;
@@ -117,35 +119,35 @@ struct CorrelationTask {
     registry.add("yields", "centrality vs pT vs eta", {HistType::kTH3F, {{100, 0, 100, "centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
     registry.add("etaphi", "centrality vs eta vs phi", {HistType::kTH3F, {{100, 0, 100, "centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
 
-    const int maxMixBin = axisMultiplicity->size() * axisVertex->size();
+    const int maxMixBin = config.axisMultiplicity->size() * config.axisVertex->size();
     registry.add("eventcount", "bin", {HistType::kTH1F, {{maxMixBin + 2, -2.5, -0.5 + maxMixBin, "bin"}}});
 
     mPairCuts.SetHistogramRegistry(&registry);
 
-    if (cfgPairCut->get("Photon") > 0 || cfgPairCut->get("K0") > 0 || cfgPairCut->get("Lambda") > 0 || cfgPairCut->get("Phi") > 0 || cfgPairCut->get("Rho") > 0) {
-      mPairCuts.SetPairCut(PairCuts::Photon, cfgPairCut->get("Photon"));
-      mPairCuts.SetPairCut(PairCuts::K0, cfgPairCut->get("K0"));
-      mPairCuts.SetPairCut(PairCuts::Lambda, cfgPairCut->get("Lambda"));
-      mPairCuts.SetPairCut(PairCuts::Phi, cfgPairCut->get("Phi"));
-      mPairCuts.SetPairCut(PairCuts::Rho, cfgPairCut->get("Rho"));
+    if (config.cfgPairCut->get("Photon") > 0 || config.cfgPairCut->get("K0") > 0 || config.cfgPairCut->get("Lambda") > 0 || config.cfgPairCut->get("Phi") > 0 || config.cfgPairCut->get("Rho") > 0) {
+      mPairCuts.SetPairCut(PairCuts::Photon, config.cfgPairCut->get("Photon"));
+      mPairCuts.SetPairCut(PairCuts::K0, config.cfgPairCut->get("K0"));
+      mPairCuts.SetPairCut(PairCuts::Lambda, config.cfgPairCut->get("Lambda"));
+      mPairCuts.SetPairCut(PairCuts::Phi, config.cfgPairCut->get("Phi"));
+      mPairCuts.SetPairCut(PairCuts::Rho, config.cfgPairCut->get("Rho"));
       cfg.mPairCuts = true;
     }
 
-    if (cfgTwoTrackCut > 0) {
-      mPairCuts.SetTwoTrackCuts(cfgTwoTrackCut, cfgTwoTrackCutMinRadius);
+    if (config.cfgTwoTrackCut > 0) {
+      mPairCuts.SetTwoTrackCuts(config.cfgTwoTrackCut, config.cfgTwoTrackCutMinRadius);
     }
 
     // --- OBJECT INIT ---
 
-    std::vector<AxisSpec> axisList = {{axisDeltaEta, "#Delta#eta"},
-                                      {axisPtAssoc, "p_{T} (GeV/c)"},
-                                      {axisPtTrigger, "p_{T} (GeV/c)"},
-                                      {axisMultiplicity, "multiplicity / centrality"},
-                                      {axisDeltaPhi, "#Delta#varphi (rad)"},
-                                      {axisVertex, "z-vtx (cm)"},
-                                      {axisEtaEfficiency, "#eta"},
-                                      {axisPtEfficiency, "p_{T} (GeV/c)"},
-                                      {axisVertexEfficiency, "z-vtx (cm)"}};
+    std::vector<AxisSpec> axisList = {{config.axisDeltaEta, "#Delta#eta"},
+                                      {config.axisPtAssoc, "p_{T} (GeV/c)"},
+                                      {config.axisPtTrigger, "p_{T} (GeV/c)"},
+                                      {config.axisMultiplicity, "multiplicity / centrality"},
+                                      {config.axisDeltaPhi, "#Delta#varphi (rad)"},
+                                      {config.axisVertex, "z-vtx (cm)"},
+                                      {config.axisEtaEfficiency, "#eta"},
+                                      {config.axisPtEfficiency, "p_{T} (GeV/c)"},
+                                      {config.axisVertexEfficiency, "z-vtx (cm)"}};
     same.setObject(new CorrelationContainer("sameEvent", "sameEvent", axisList));
     mixed.setObject(new CorrelationContainer("mixedEvent", "mixedEvent", axisList));
 
@@ -213,7 +215,7 @@ struct CorrelationTask {
     for (auto& track1 : tracks1) {
       // LOGF(info, "Track %f | %f | %f  %d %d", track1.eta(), track1.phi(), track1.pt(), track1.isGlobalTrack(), track1.isGlobalTrackSDD());
 
-      if (cfgTriggerCharge != 0 && cfgTriggerCharge * track1.sign() < 0) {
+      if (config.cfgTriggerCharge != 0 && config.cfgTriggerCharge * track1.sign() < 0) {
         continue;
       }
 
@@ -231,14 +233,14 @@ struct CorrelationTask {
           continue;
         }
 
-        if (cfgPtOrder != 0 && track2.pt() >= track1.pt()) {
+        if (config.cfgPtOrder != 0 && track2.pt() >= track1.pt()) {
           continue;
         }
 
-        if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
+        if (config.cfgAssociatedCharge != 0 && config.cfgAssociatedCharge * track2.sign() < 0) {
           continue;
         }
-        if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
+        if (config.cfgPairCharge != 0 && config.cfgPairCharge * track1.sign() * track2.sign() < 0) {
           continue;
         }
 
@@ -246,7 +248,7 @@ struct CorrelationTask {
           continue;
         }
 
-        if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
+        if (config.cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
           continue;
         }
 
@@ -278,19 +280,19 @@ struct CorrelationTask {
     // TODO will go to CCDBConfigurable
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
 
-    if (cfgEfficiencyTrigger.value.empty() == false) {
-      cfg.mEfficiencyTrigger = ccdb->getForTimeStamp<THnT<float>>(cfgEfficiencyTrigger, bc.timestamp());
+    if (config.cfgEfficiencyTrigger.value.empty() == false) {
+      cfg.mEfficiencyTrigger = ccdb->getForTimeStamp<THnT<float>>(config.cfgEfficiencyTrigger, bc.timestamp());
       if (cfg.mEfficiencyTrigger == nullptr) {
-        LOGF(fatal, "Could not load efficiency histogram for trigger particles from %s", cfgEfficiencyTrigger.value.c_str());
+        LOGF(fatal, "Could not load efficiency histogram for trigger particles from %s", config.cfgEfficiencyTrigger.value.c_str());
       }
-      LOGF(info, "Loaded efficiency histogram for trigger particles from %s (%p)", cfgEfficiencyTrigger.value.c_str(), (void*)cfg.mEfficiencyTrigger);
+      LOGF(info, "Loaded efficiency histogram for trigger particles from %s (%p)", config.cfgEfficiencyTrigger.value.c_str(), (void*)cfg.mEfficiencyTrigger);
     }
-    if (cfgEfficiencyAssociated.value.empty() == false) {
-      cfg.mEfficiencyAssociated = ccdb->getForTimeStamp<THnT<float>>(cfgEfficiencyAssociated, bc.timestamp());
+    if (config.cfgEfficiencyAssociated.value.empty() == false) {
+      cfg.mEfficiencyAssociated = ccdb->getForTimeStamp<THnT<float>>(config.cfgEfficiencyAssociated, bc.timestamp());
       if (cfg.mEfficiencyAssociated == nullptr) {
-        LOGF(fatal, "Could not load efficiency histogram for associated particles from %s", cfgEfficiencyAssociated.value.c_str());
+        LOGF(fatal, "Could not load efficiency histogram for associated particles from %s", config.cfgEfficiencyAssociated.value.c_str());
       }
-      LOGF(info, "Loaded efficiency histogram for associated particles from %s (%p)", cfgEfficiencyAssociated.value.c_str(), (void*)cfg.mEfficiencyAssociated);
+      LOGF(info, "Loaded efficiency histogram for associated particles from %s (%p)", config.cfgEfficiencyAssociated.value.c_str(), (void*)cfg.mEfficiencyAssociated);
     }
 
     LOGF(info, "processSameAOD: Tracks for collision: %d | Vertex: %.1f | INT7: %d | V0M: %.1f", tracks.size(), collision.posZ(), collision.sel7(), collision.centV0M());
@@ -328,7 +330,7 @@ struct CorrelationTask {
     AnalysisDataProcessorBuilder::GroupSlicer slicer(collisions, tracksTuple);
 
     // Strictly upper categorised collisions, for cfgNoMixedEvents combinations per bin, skipping those in entry -1
-    for (auto& [collision1, collision2] : selfCombinations("fBin", cfgNoMixedEvents, -1, collisions, collisions)) {
+    for (auto& [collision1, collision2] : selfCombinations("fBin", config.cfgNoMixedEvents, -1, collisions, collisions)) {
 
       LOGF(info, "processMixedAOD: Mixed collisions bin: %d pair: %d (%f), %d (%f)", collision1.bin(), collision1.index(), collision1.posZ(), collision2.index(), collision2.posZ());
 
@@ -378,7 +380,7 @@ struct CorrelationTask {
     AnalysisDataProcessorBuilder::GroupSlicer slicer(collisions, tracksTuple);
 
     // Strictly upper categorised collisions, for cfgNoMixedEvents combinations per bin, skipping those in entry -1
-    for (auto& [collision1, collision2] : selfCombinations("fBin", cfgNoMixedEvents, -1, collisions, collisions)) {
+    for (auto& [collision1, collision2] : selfCombinations("fBin", config.cfgNoMixedEvents, -1, collisions, collisions)) {
 
       LOGF(info, "processMixedDerived: Mixed collisions bin: %d pair: %d (%f), %d (%f)", collision1.bin(), collision1.index(), collision1.posZ(), collision2.index(), collision2.posZ());
 
@@ -424,7 +426,7 @@ struct CorrelationTask {
 
     for (auto track1 = tracks.begin(); track1 != tracks.end(); ++track1) {
 
-      if (cfgTriggerCharge != 0 && cfgTriggerCharge * track1.sign() < 0) {
+      if (config.cfgTriggerCharge != 0 && config.cfgTriggerCharge * track1.sign() < 0) {
         continue;
       }
 
@@ -437,13 +439,13 @@ struct CorrelationTask {
     for (auto& [track1, track2] : combinations(tracks, tracks)) {
       //LOGF(info, "Combination %d %d", track1.index(), track2.index());
 
-      if (cfgTriggerCharge != 0 && cfgTriggerCharge * track1.sign() < 0) {
+      if (config.cfgTriggerCharge != 0 && config.cfgTriggerCharge * track1.sign() < 0) {
         continue;
       }
-      if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
+      if (config.cfgAssociatedCharge != 0 && config.cfgAssociatedCharge * track2.sign() < 0) {
         continue;
       }
-      if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
+      if (config.cfgPairCharge != 0 && config.cfgPairCharge * track1.sign() * track2.sign() < 0) {
         continue;
       }
 
@@ -451,7 +453,7 @@ struct CorrelationTask {
         continue;
       }
 
-      if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, getMagneticField(bc.timestamp()))) {
+      if (config.cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, getMagneticField(bc.timestamp()))) {
         continue;
       }
 
