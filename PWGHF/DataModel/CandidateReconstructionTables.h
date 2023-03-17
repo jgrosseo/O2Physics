@@ -89,7 +89,7 @@ using BigTracksPIDExtended = soa::Join<BigTracksPID, aod::TracksDCA>;
 
 namespace hf_track_index
 {
-DECLARE_SOA_INDEX_COLUMN(Collision, collision);   //! Collision index
+DECLARE_SOA_INDEX_COLUMN(Collision, collision);                   //! Collision index
 DECLARE_SOA_INDEX_COLUMN_FULL(Prong0, prong0, int, Tracks, "_0"); //! Index to first prong
 DECLARE_SOA_INDEX_COLUMN_FULL(Prong1, prong1, int, Tracks, "_1"); //! Index to second prong
 DECLARE_SOA_INDEX_COLUMN_FULL(Prong2, prong2, int, Tracks, "_2"); //! Index to third prong
