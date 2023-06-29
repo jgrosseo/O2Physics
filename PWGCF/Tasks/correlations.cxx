@@ -659,7 +659,7 @@ struct CorrelationTask {
 
       // check if collision1 has at least one reconstructed collision
       int found = 0;
-      for (auto& reco_coll: collisions) {
+      for (auto& reco_coll : collisions) {
         if (reco_coll.cfMcCollisionId() == collision1.globalIndex()) {
           found++;
         }
