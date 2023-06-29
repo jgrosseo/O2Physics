@@ -634,7 +634,7 @@ struct CorrelationTask {
   PROCESS_SWITCH(CorrelationTask, processMCSameDerived, "Process MC same event on derived data", false);
 
   using BinningTypeMCDerived = ColumnBinningPolicy<aod::mccollision::PosZ, aod::cfmccollision::Multiplicity>;
-  Preslice<aod::CFCollisions> collisionPerMCCollision = aod::cfcollision::cfMcCollisionId;
+  // Preslice<aod::CFCollisions> collisionPerMCCollision = aod::cfcollision::cfMcCollisionId;
   void processMCMixedDerived(soa::Filtered<aod::CFMcCollisions>& mcCollisions, soa::Filtered<aod::CFMcParticles> const& mcParticles, soa::Filtered<aod::CFCollisions> const& collisions)
   {
     // Strictly upper categorised collisions, for cfgNoMixedEvents combinations per bin, skipping those in entry -1
@@ -658,13 +658,28 @@ struct CorrelationTask {
       fillCorrelations<CorrelationContainer::kCFStepAll>(mixed, tracks1, tracks2, collision1.multiplicity(), collision1.posZ(), 0, eventWeight);
 
       // check if collision1 has at least one reconstructed collision
-      auto groupedCollisions = collisions.sliceBy(collisionPerMCCollision, collision1.globalIndex());
-      if (cfgVerbosity > 0) {
-        LOGF(info, "Found %d related collisions", groupedCollisions.size());
+      int found = 0;
+      for (auto& reco_coll: collisions) {
+        if (reco_coll.cfMcCollisionId() == collision1.globalIndex()) {
+          found++;
+        }
       }
-      if (groupedCollisions.size() == 0) {
+      if (cfgVerbosity > 0) {
+        LOGF(info, "Found %d related collisions", found);
+      }
+      if (found == 0) {
         continue;
       }
+
+      // check if collision1 has at least one reconstructed collision
+      // NOTE this currently fails for Run3 due to an unsorted index --> Reason: Table CFCollisions index fIndexCFMcCollisions is not sorted: next value 35 < previous value 36
+      // auto groupedCollisions = collisions.sliceBy(collisionPerMCCollision, collision1.globalIndex());
+      // if (cfgVerbosity > 0) {
+      //   LOGF(info, "Found %d related collisions", groupedCollisions.size());
+      // }
+      // if (groupedCollisions.size() == 0) {
+      //   continue;
+      // }
 
       // STEP 2, 4, 5
       if (it.isNewWindow()) {
