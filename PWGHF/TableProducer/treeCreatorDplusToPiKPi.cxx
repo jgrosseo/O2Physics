@@ -16,8 +16,9 @@
 ///
 /// \author Alexandre Bigot <alexandre.bigot@cern.ch>, IPHC Strasbourg
 
-#include "Framework/runDataProcessing.h"
 #include "Framework/AnalysisTask.h"
+#include "Framework/runDataProcessing.h"
+
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
 
@@ -206,7 +207,17 @@ struct HfTreeCreatorDplusToPiKPi {
   Configurable<int> selectionFlagDplus{"selectionFlagDplus", 1, "Selection Flag for Dplus"};
   Configurable<bool> fillCandidateLiteTable{"fillCandidateLiteTable", false, "Switch to fill lite table with candidate properties"};
 
+  // parameters for production of training samples
+  Configurable<bool> fillOnlySignal{"fillOnlySignal", false, "Flag to fill derived tables with signal for ML trainings"};
+  Configurable<bool> fillOnlyBackground{"fillOnlyBackground", false, "Flag to fill derived tables with background for ML trainings"};
+  Configurable<float> downSampleBkgFactor{"downSampleBkgFactor", 1., "Fraction of background candidates to keep for ML trainings"};
+  Configurable<float> ptMaxForDownSample{"ptMaxForDownSample", 10., "Maximum pt for the application of the downsampling factor"};
+
   Filter filterSelectCandidates = aod::hf_sel_candidate_dplus::isSelDplusToPiKPi >= selectionFlagDplus;
+  using SelectedCandidatesMc = soa::Filtered<soa::Join<aod::HfCand3Prong, aod::HfCand3ProngMcRec, aod::HfSelDplusToPiKPi>>;
+
+  Partition<SelectedCandidatesMc> recSig = nabs(aod::hf_cand_3prong::flagMcMatchRec) == (int8_t)BIT(aod::hf_cand_3prong::DecayType::DplusToPiKPi);
+  Partition<SelectedCandidatesMc> recBg = nabs(aod::hf_cand_3prong::flagMcMatchRec) != (int8_t)BIT(aod::hf_cand_3prong::DecayType::DplusToPiKPi);
 
   void init(InitContext const&)
   {
@@ -357,6 +368,12 @@ struct HfTreeCreatorDplusToPiKPi {
       rowCandidateLite.reserve(candidates.size());
     }
     for (auto const& candidate : candidates) {
+      if (fillOnlyBackground) {
+        float pseudoRndm = candidate.ptProng0() * 1000. - (int64_t)(candidate.ptProng0() * 1000);
+        if (candidate.pt() < ptMaxForDownSample && pseudoRndm >= downSampleBkgFactor) {
+          continue;
+        }
+      }
       auto prong0 = candidate.prong0_as<aod::BigTracksPID>();
       auto prong1 = candidate.prong1_as<aod::BigTracksPID>();
       auto prong2 = candidate.prong2_as<aod::BigTracksPID>();
@@ -368,7 +385,7 @@ struct HfTreeCreatorDplusToPiKPi {
 
   void processMc(aod::Collisions const& collisions,
                  aod::McCollisions const&,
-                 soa::Filtered<soa::Join<aod::HfCand3Prong, aod::HfCand3ProngMcRec, aod::HfSelDplusToPiKPi>> const& candidates,
+                 SelectedCandidatesMc const& candidates,
                  soa::Join<aod::McParticles, aod::HfCand3ProngMcGen> const& particles,
                  aod::BigTracksPID const&)
   {
@@ -379,15 +396,43 @@ struct HfTreeCreatorDplusToPiKPi {
     }
 
     // Filling candidate properties
-    rowCandidateFull.reserve(candidates.size());
-    if (fillCandidateLiteTable) {
-      rowCandidateLite.reserve(candidates.size());
-    }
-    for (auto const& candidate : candidates) {
-      auto prong0 = candidate.prong0_as<aod::BigTracksPID>();
-      auto prong1 = candidate.prong1_as<aod::BigTracksPID>();
-      auto prong2 = candidate.prong2_as<aod::BigTracksPID>();
-      fillCandidateTable<true>(candidate, prong0, prong1, prong2);
+    if (fillOnlySignal) {
+      rowCandidateFull.reserve(recSig.size());
+      if (fillCandidateLiteTable) {
+        rowCandidateLite.reserve(recSig.size());
+      }
+      for (const auto& candidate : recSig) {
+        auto prong0 = candidate.prong0_as<aod::BigTracksPID>();
+        auto prong1 = candidate.prong1_as<aod::BigTracksPID>();
+        auto prong2 = candidate.prong2_as<aod::BigTracksPID>();
+        fillCandidateTable<true>(candidate, prong0, prong1, prong2);
+      }
+    } else if (fillOnlyBackground) {
+      rowCandidateFull.reserve(recBg.size());
+      if (fillCandidateLiteTable) {
+        rowCandidateLite.reserve(recBg.size());
+      }
+      for (const auto& candidate : recBg) {
+        float pseudoRndm = candidate.ptProng0() * 1000. - (int64_t)(candidate.ptProng0() * 1000);
+        if (candidate.pt() < ptMaxForDownSample && pseudoRndm >= downSampleBkgFactor) {
+          continue;
+        }
+        auto prong0 = candidate.prong0_as<aod::BigTracksPID>();
+        auto prong1 = candidate.prong1_as<aod::BigTracksPID>();
+        auto prong2 = candidate.prong2_as<aod::BigTracksPID>();
+        fillCandidateTable<true>(candidate, prong0, prong1, prong2);
+      }
+    } else {
+      rowCandidateFull.reserve(candidates.size());
+      if (fillCandidateLiteTable) {
+        rowCandidateLite.reserve(candidates.size());
+      }
+      for (const auto& candidate : candidates) {
+        auto prong0 = candidate.prong0_as<aod::BigTracksPID>();
+        auto prong1 = candidate.prong1_as<aod::BigTracksPID>();
+        auto prong2 = candidate.prong2_as<aod::BigTracksPID>();
+        fillCandidateTable<true>(candidate, prong0, prong1, prong2);
+      }
     }
 
     // Filling particle properties
