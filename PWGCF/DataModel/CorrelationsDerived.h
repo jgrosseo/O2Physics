@@ -79,6 +79,35 @@ using CFTrack = CFTracks::iterator;
 using CFTrackLabel = CFTrackLabels::iterator;
 using CFTracksWithLabel = soa::Join<CFTracks, CFTrackLabels>;
 using CFTrackWithLabel = CFTracksWithLabel::iterator;
+
+namespace cf2prongtrack1
+{
+DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 2 track
+}
+
+namespace cf2prongtrack2
+{
+DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 2 track
+}
+
+namespace cf2prongtrack
+{
+DECLARE_SOA_INDEX_COLUMN(CFCollision, cfCollision);   //! Index to collision
+DECLARE_SOA_INDEX_COLUMN(CFMcParticle, cfMCParticle); //! Index to MC particle
+// DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 2 track
+// type
+DECLARE_SOA_COLUMN(Pt, pt, float);        //! pT (GeV/c)
+DECLARE_SOA_COLUMN(Eta, eta, float);      //! Pseudorapidity
+DECLARE_SOA_COLUMN(Phi, phi, float);      //! Phi angle
+DECLARE_SOA_COLUMN(Mask, mask, uint32_t); //! Selection mask
+} // namespace cf2prongtrack
+DECLARE_SOA_TABLE(CF2ProngTracks, "AOD", "CF2PRONGTRACK", //! Reduced track table
+                  o2::soa::Index<>,
+                  cf2prongtrack::CFCollisionId,
+                  cf2prongtrack1::CFTrackId,
+                  cf2prongtrack2::CFTrackId,
+                  cf2prongtrack::Pt, cf2prongtrack::Eta, cf2prongtrack::Phi, cf2prongtrack::Mask);
+using CF2ProngTrack = CF2ProngTracks::iterator;
 } // namespace o2::aod
 
 #endif // O2_ANALYSIS_CFDERIVED_H

@@ -21,6 +21,10 @@
 #include "Common/DataModel/TrackSelectionTables.h"
 #include "Common/DataModel/Centrality.h"
 
+#include "PWGHF/Core/HfHelper.h"
+#include "PWGHF/DataModel/CandidateReconstructionTables.h"
+#include "PWGHF/DataModel/CandidateSelectionTables.h"
+
 #include <TH3F.h>
 #include <TDatabasePDG.h>
 
@@ -41,6 +45,26 @@ DECLARE_SOA_COLUMN(Multiplicity, multiplicity, float); //! Centrality/multiplici
 DECLARE_SOA_TABLE(CFMultiplicities, "AOD", "CFMULTIPLICITY", cfmultiplicity::Multiplicity); //! Transient multiplicity table
 
 using CFMultiplicity = CFMultiplicities::iterator;
+
+using HFProngIndexType = std::result_of<decltype (&HfCand2Prong::iterator::prong0Id)(HfCand2Prong::iterator)>::type;
+using CFCollisionIndexType = std::result_of<decltype (&Produces<CFCollision>::lastIndex)(Produces<CFCollision>)>::type;
+namespace cfcollref
+{
+DECLARE_SOA_COLUMN(CollRef, collRef, CFCollisionIndexType); //! CF collision index
+} // namespace cfcollref
+DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cfcollref::CollRef); //! Transient cf collision index table
+
+using CFCollRef = CFCollRefs::iterator;
+
+using CFTrackIndexType = std::result_of<decltype (&Produces<CFTrack>::lastIndex)(Produces<CFTrack>)>::type;
+namespace cftrackref
+{
+DECLARE_SOA_COLUMN(TrackRef, trackRef, CFTrackIndexType); //! CF track index
+} // namespace cftrackref
+DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::TrackRef); //! Transient cf track index table
+
+using CFTrackRef = CFTrackRefs::iterator;
+
 } // namespace o2::aod
 
 struct FilterCF {
@@ -55,6 +79,7 @@ struct FilterCF {
   O2_DEFINE_CONFIGURABLE(cfgVerbosity, int, 1, "Verbosity level (0 = major, 1 = per collision)")
   O2_DEFINE_CONFIGURABLE(cfgTrigger, int, 7, "Trigger choice: (0 = none, 7 = sel7, 8 = sel8)")
   O2_DEFINE_CONFIGURABLE(cfgCollisionFlags, uint16_t, aod::collision::CollisionFlagsRun2::Run2VertexerTracks, "Request collision flags if non-zero (0 = off, 1 = Run2VertexerTracks)")
+  O2_DEFINE_CONFIGURABLE(cfgTransientTables, bool, false, "Output transient tables for collision and track IDs")
 
   // Filters and input definitions
   Filter collisionZVtxFilter = nabs(aod::collision::posZ) < cfgCutVertex;
@@ -78,6 +103,9 @@ struct FilterCF {
   Produces<aod::CFMcCollisions> outputMcCollisions;
   Produces<aod::CFMcParticles> outputMcParticles;
 
+  Produces<aod::CFCollRefs> outputCollRefs;   // used mainly to match the id to CFCollision
+  Produces<aod::CFTrackRefs> outputTrackRefs; // used mainly to match the id to CFCollision
+
   template <typename TCollision>
   bool keepCollision(TCollision& collision)
   {
@@ -91,11 +119,17 @@ struct FilterCF {
     return false;
   }
 
-  void processData(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Filtered<soa::Join<aod::Tracks, aod::TrackSelection>> const& tracks)
+  void processData(soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks)
   {
     if (cfgVerbosity > 0) {
       LOGF(info, "processData: Tracks for collision: %d | Vertex: %.1f (%d) | INT7: %d | Multiplicity: %.1f", tracks.size(), collision.posZ(), collision.flags(), collision.sel7(), collision.multiplicity());
     }
+
+    if (cfgTransientTables)
+      outputCollRefs(~aod::CFCollisionIndexType(0));
+
+    if (std::abs(collision.posZ()) >= cfgCutVertex || (cfgCollisionFlags != 0 && ((collision.flags() & cfgCollisionFlags) != cfgCollisionFlags)))
+      return;
 
     if (!keepCollision(collision)) {
       return;
@@ -103,6 +137,9 @@ struct FilterCF {
 
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     outputCollisions(bc.runNumber(), collision.posZ(), collision.multiplicity(), bc.timestamp());
+
+    if (cfgTransientTables)
+      outputCollRefs(outputCollisions.lastIndex());
 
     for (auto& track : tracks) {
       uint8_t trackType = 0;
@@ -112,7 +149,16 @@ struct FilterCF {
         trackType = 2;
       }
 
+      if (cfgTransientTables)
+        outputTrackRefs(~aod::CFTrackIndexType(0));
+
+      if (!track.isGlobalTrack() || !track.isGlobalTrackSDD() ||
+          std::abs(track.eta()) > cfgCutEta || track.pt() < cfgCutPt)
+        continue;
+
       outputTracks(outputCollisions.lastIndex(), track.pt(), track.eta(), track.phi(), track.sign(), trackType);
+      if (cfgTransientTables)
+        outputTrackRefs(outputTracks.lastIndex());
 
       yields->Fill(collision.multiplicity(), track.pt(), track.eta());
       etaphi->Fill(collision.multiplicity(), track.eta(), track.phi());
