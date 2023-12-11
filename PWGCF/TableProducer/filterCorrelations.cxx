@@ -42,21 +42,15 @@ DECLARE_SOA_TABLE(CFMultiplicities, "AOD", "CFMULTIPLICITY", cfmultiplicity::Mul
 
 using CFMultiplicity = CFMultiplicities::iterator;
 
-using CFCollisionIndexType = std::result_of<decltype (&Produces<CFCollision>::lastIndex)(Produces<CFCollision>)>::type;
-namespace cfcollref
-{
-DECLARE_SOA_COLUMN(CollRef, collRef, CFCollisionIndexType); //! CF collision index
-} // namespace cfcollref
-DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cfcollref::CollRef); //! Transient cf collision index table
+DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cftrack::CFCollisionId); //! Transient cf collision index table
 
 using CFCollRef = CFCollRefs::iterator;
 
-using CFTrackIndexType = std::result_of<decltype (&Produces<CFTrack>::lastIndex)(Produces<CFTrack>)>::type;
 namespace cftrackref
 {
-DECLARE_SOA_COLUMN(TrackRef, trackRef, CFTrackIndexType); //! CF track index
+DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
 } // namespace cftrackref
-DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::TrackRef); //! Transient cf track index table
+DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::CFTrackId); //! Transient cf track index table
 
 using CFTrackRef = CFTrackRefs::iterator;
 
@@ -121,7 +115,8 @@ struct FilterCF {
     }
 
     if (cfgTransientTables)
-      outputCollRefs(~aod::CFCollisionIndexType(0));
+      // outputCollRefs(~aod::CFCollisionIndexType(0));
+      outputCollRefs(-1);
 
     if (std::abs(collision.posZ()) >= cfgCutVertex || (cfgCollisionFlags != 0 && ((collision.flags() & cfgCollisionFlags) != cfgCollisionFlags)))
       return;
@@ -145,7 +140,7 @@ struct FilterCF {
       }
 
       if (cfgTransientTables)
-        outputTrackRefs(~aod::CFTrackIndexType(0));
+        outputTrackRefs(-1);
 
       if (!track.isGlobalTrack() || !track.isGlobalTrackSDD() ||
           std::abs(track.eta()) > cfgCutEta || track.pt() < cfgCutPt)
