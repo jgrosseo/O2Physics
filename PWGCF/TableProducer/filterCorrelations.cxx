@@ -21,10 +21,6 @@
 #include "Common/DataModel/TrackSelectionTables.h"
 #include "Common/DataModel/Centrality.h"
 
-#include "PWGHF/Core/HfHelper.h"
-#include "PWGHF/DataModel/CandidateReconstructionTables.h"
-#include "PWGHF/DataModel/CandidateSelectionTables.h"
-
 #include <TH3F.h>
 #include <TDatabasePDG.h>
 
@@ -46,7 +42,6 @@ DECLARE_SOA_TABLE(CFMultiplicities, "AOD", "CFMULTIPLICITY", cfmultiplicity::Mul
 
 using CFMultiplicity = CFMultiplicities::iterator;
 
-using HFProngIndexType = std::result_of<decltype (&HfCand2Prong::iterator::prong0Id)(HfCand2Prong::iterator)>::type;
 using CFCollisionIndexType = std::result_of<decltype (&Produces<CFCollision>::lastIndex)(Produces<CFCollision>)>::type;
 namespace cfcollref
 {
