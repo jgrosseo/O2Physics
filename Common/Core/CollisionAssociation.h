@@ -163,7 +163,7 @@ class CollisionAssociation
       // find uniform blocks
       if ((track.collisionId() < lastCollisionId) || (lastCollisionId < 0 && track.collisionId() >= 0)) {
         if (lastCollisionId >= 0 || mIncludeUnassigned) {
-          LOGP(debug, "Found track block from {} to {}, current id {}, last id {}", trackBegin.filteredIndex(), track.filteredIndex()-1, track.collisionId(), lastCollisionId);
+          LOGP(debug, "Found track block from {} to {}, current id {}, last id {}", trackBegin.filteredIndex(), track.filteredIndex() - 1, track.collisionId(), lastCollisionId);
           trackIterationWindows.push_back(std::make_pair(trackBegin, track));
         }
         trackBegin = track;
@@ -172,7 +172,7 @@ class CollisionAssociation
     }
     // trackIterationWindows.push_back(std::make_pair(trackBegin, tracks.end()));
     if (lastCollisionId >= 0 || mIncludeUnassigned) {
-      LOGP(debug, "Found track block from {} to {}", trackBegin.filteredIndex(), tracks.size()-1);
+      LOGP(debug, "Found track block from {} to {}", trackBegin.filteredIndex(), tracks.size() - 1);
       trackIterationWindows.push_back(std::make_pair(trackBegin, track));
     }
 
@@ -187,8 +187,7 @@ class CollisionAssociation
       uint64_t collBC = collision.bc().globalBC();
 
       // This is done per block to allow optimization below. Within each block the globalBC increase continously
-      for (auto& iterationWindow : trackIterationWindows)
-      {
+      for (auto& iterationWindow : trackIterationWindows) {
         bool iteratorMoved = false;
         const bool isAssignedTrackWindow = (iterationWindow.first != iterationWindow.second) ? iterationWindow.first.has_collision() : false;
         for (auto track = iterationWindow.first; track != iterationWindow.second; ++track) {
@@ -223,7 +222,7 @@ class CollisionAssociation
           float trackTimeRes = 0;
           if constexpr (isCentralBarrel) {
             if (mUsePvAssociation && track.isPVContributor()) {
-              trackTime = track.collision().collisionTime();    // if PV contributor, we assume the time to be the one of the collision
+              trackTime = track.collision().collisionTime();        // if PV contributor, we assume the time to be the one of the collision
               trackTimeRes = o2::constants::lhc::LHCBunchSpacingNS; // 1 BC
             } else {
               trackTime = track.trackTime();
