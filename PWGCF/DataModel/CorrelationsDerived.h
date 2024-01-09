@@ -80,6 +80,20 @@ using CFTrackLabel = CFTrackLabels::iterator;
 using CFTracksWithLabel = soa::Join<CFTracks, CFTrackLabels>;
 using CFTrackWithLabel = CFTracksWithLabel::iterator;
 
+//------transient CF-filter to CF-2prong-filter
+DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cftrack::CFCollisionId); //! Transient cf collision index table
+
+using CFCollRef = CFCollRefs::iterator;
+
+namespace cftrackref
+{
+DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
+} // namespace cftrackref
+DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::CFTrackId); //! Transient cf track index table
+
+using CFTrackRef = CFTrackRefs::iterator;
+//------
+
 namespace cf2prongtrack1
 {
 DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 2 track

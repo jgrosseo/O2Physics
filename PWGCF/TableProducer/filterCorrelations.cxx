@@ -41,19 +41,6 @@ DECLARE_SOA_COLUMN(Multiplicity, multiplicity, float); //! Centrality/multiplici
 DECLARE_SOA_TABLE(CFMultiplicities, "AOD", "CFMULTIPLICITY", cfmultiplicity::Multiplicity); //! Transient multiplicity table
 
 using CFMultiplicity = CFMultiplicities::iterator;
-
-DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cftrack::CFCollisionId); //! Transient cf collision index table
-
-using CFCollRef = CFCollRefs::iterator;
-
-namespace cftrackref
-{
-DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
-} // namespace cftrackref
-DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::CFTrackId); //! Transient cf track index table
-
-using CFTrackRef = CFTrackRefs::iterator;
-
 } // namespace o2::aod
 
 struct FilterCF {
