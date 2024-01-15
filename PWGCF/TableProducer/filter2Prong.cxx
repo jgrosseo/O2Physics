@@ -41,10 +41,23 @@ struct FilterCF2Prong{
 
 	Produces<aod::CF2ProngTracks> output2ProngTracks;
 
+	void init(InitContext& context){
+		LOGF(info,"FilterCF2Prong initialized\n");
+		printf("FilterCF2Prong initialized\n");
+	}
+
 	using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
 	void processData(soa::Join<aod::Collisions, aod::CFCollRefs>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection, aod::CFTrackRefs> const& tracks, HFCandidates const& candidates){
+	//void processData(soa::Join<aod::Collisions>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection, aod::CFTrackRefs> const& tracks, HFCandidates const& candidates){
+	//void processData(soa::Join<aod::Tracks, aod::TrackSelection, aod::CFTrackRefs> const& tracks){
+		auto collId = collision.cfCollision_as<aod::CFCollRefs>().cfCollisionId();
+		if(collId < 0){
+			LOGF(info,"rejecting collision\n");
+			return;
+		}
+
 		if (cfgVerbosity > 0) {
-			LOGF(info, "processData2Prong: Candidates for collision: %u", candidates.size());
+			LOGF(info, "processData2Prong: Candidates for collision: %u\n", candidates.size());
 		}
 		int prongCFId[2] = {-1,-1};
 		for(auto &track : tracks){

@@ -96,7 +96,7 @@ using CFTrackRef = CFTrackRefs::iterator;
 
 namespace cf2prongtrack1
 {
-DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 2 track
+DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! Index to prong 1 track
 }
 
 namespace cf2prongtrack2

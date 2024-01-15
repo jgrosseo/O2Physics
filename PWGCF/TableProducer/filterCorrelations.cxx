@@ -79,8 +79,8 @@ struct FilterCF {
   Produces<aod::CFMcCollisions> outputMcCollisions;
   Produces<aod::CFMcParticles> outputMcParticles;
 
-  Produces<aod::CFCollRefs> outputCollRefs;   // used mainly to match the id to CFCollision
-  Produces<aod::CFTrackRefs> outputTrackRefs; // used mainly to match the id to CFCollision
+  Produces<aod::CFCollRefs> outputCollRefs; 
+  Produces<aod::CFTrackRefs> outputTrackRefs;
 
   template <typename TCollision>
   bool keepCollision(TCollision& collision)
@@ -97,20 +97,28 @@ struct FilterCF {
 
   void processData(soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks)
   {
+    /*outputCollRefs(-1);
+    for (auto& track : tracks) {
+        (void)track;
+        outputTrackRefs(-1);
+      }
+    return;*/
+	//
     if (cfgVerbosity > 0) {
       LOGF(info, "processData: Tracks for collision: %d | Vertex: %.1f (%d) | INT7: %d | Multiplicity: %.1f", tracks.size(), collision.posZ(), collision.flags(), collision.sel7(), collision.multiplicity());
     }
 
-    if (cfgTransientTables)
-      // outputCollRefs(~aod::CFCollisionIndexType(0));
-      outputCollRefs(-1);
-
-    if (std::abs(collision.posZ()) >= cfgCutVertex || (cfgCollisionFlags != 0 && ((collision.flags() & cfgCollisionFlags) != cfgCollisionFlags)))
+    if (std::abs(collision.posZ()) >= cfgCutVertex || (cfgCollisionFlags != 0 && ((collision.flags() & cfgCollisionFlags) != cfgCollisionFlags))
+		|| !keepCollision(collision)){
+		if(cfgTransientTables){
+			outputCollRefs(-1);
+			for(auto &track : tracks){
+				(void)track;
+				outputTrackRefs(-1);
+			}
+		}
       return;
-
-    if (!keepCollision(collision)) {
-      return;
-    }
+	 }
 
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     outputCollisions(bc.runNumber(), collision.posZ(), collision.multiplicity(), bc.timestamp());
@@ -119,19 +127,19 @@ struct FilterCF {
       outputCollRefs(outputCollisions.lastIndex());
 
     for (auto& track : tracks) {
+      if (!track.isGlobalTrack() || !track.isGlobalTrackSDD() ||
+          std::abs(track.eta()) > cfgCutEta || track.pt() < cfgCutPt){
+        if (cfgTransientTables)
+          outputTrackRefs(-1);
+        continue;
+      }
+
       uint8_t trackType = 0;
       if (track.isGlobalTrack()) {
         trackType = 1;
       } else if (track.isGlobalTrackSDD()) {
         trackType = 2;
       }
-
-      if (cfgTransientTables)
-        outputTrackRefs(-1);
-
-      if (!track.isGlobalTrack() || !track.isGlobalTrackSDD() ||
-          std::abs(track.eta()) > cfgCutEta || track.pt() < cfgCutPt)
-        continue;
 
       outputTracks(outputCollisions.lastIndex(), track.pt(), track.eta(), track.phi(), track.sign(), trackType);
       if (cfgTransientTables)
@@ -289,7 +297,7 @@ struct MultiplicitySelector {
   {
     output(tracks.size());
   }
-  PROCESS_SWITCH(MultiplicitySelector, processTracks, "Select track count as multiplicity", false);
+  PROCESS_SWITCH(MultiplicitySelector, processTracks, "Select track count as multiplicity", true);
 
   void processRun2V0M(aod::CentRun2V0Ms const& centralities)
   {
@@ -297,7 +305,7 @@ struct MultiplicitySelector {
       output(c.centRun2V0M());
     }
   }
-  PROCESS_SWITCH(MultiplicitySelector, processRun2V0M, "Select V0M centrality as multiplicity", true);
+  PROCESS_SWITCH(MultiplicitySelector, processRun2V0M, "Select V0M centrality as multiplicity", false);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
