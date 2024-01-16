@@ -49,7 +49,7 @@ struct FilterCF2Prong{
 	using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
 	//------
 	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
-	void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
+	void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, HFCandidates const& candidates){
 	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
 	//void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
 	//------
@@ -74,14 +74,15 @@ struct FilterCF2Prong{
 					break;
 				}
 			}
-			//if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) == 0) // TODO <--- make configurable
-			//	continue;
 			//look-up the collision id
 			auto collisionId = cfcollisions.begin().globalIndex();
 			if(cfgVerbosity > 0)
 				LOGF(info,"Accepting candidate %lu\n",c.globalIndex());
+			uint8_t m = 0u;
+			if((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) != 0)
+				m |= aod::cf2prongtrack::kD0ToPiK;
 			output2ProngTracks(collisionId,
-				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), c.hfflag());
+				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), m);
 		}
 	}
 	PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);

@@ -79,6 +79,8 @@ struct CorrelationTask {
 
   O2_DEFINE_CONFIGURABLE(cfgVerbosity, int, 1, "Verbosity level (0 = major, 1 = per collision)")
 
+  O2_DEFINE_CONFIGURABLE(cfgDecayParticleMask, int, 0, "Selection bitmask for the decay particles: 0 = no selection")
+
   ConfigurableAxis axisVertex{"axisVertex", {7, -7, 7}, "vertex axis for histograms"};
   ConfigurableAxis axisDeltaPhi{"axisDeltaPhi", {72, -PIHalf, PIHalf * 3}, "delta phi axis for histograms"};
   ConfigurableAxis axisDeltaEta{"axisDeltaEta", {40, -2, 2}, "delta eta axis for histograms"};
@@ -102,6 +104,9 @@ struct CorrelationTask {
   // MC filters
   Filter cfMCCollisionFilter = nabs(aod::mccollision::posZ) < cfgCutVertex;
   Filter cfMCParticleFilter = (nabs(aod::cfmcparticle::eta) < cfgCutEta) && (aod::cfmcparticle::pt > cfgCutPt) && (aod::cfmcparticle::sign != 0);
+
+  // HF filters
+  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt) && (cfgDecayParticleMask == 0 || cfgDecayParticleMask&aod::cf2prongtrack::mask != 0);
 
   // Output definitions
   OutputObj<CorrelationContainer> same{"sameEvent"};
@@ -278,7 +283,8 @@ struct CorrelationTask {
 			}
 		}
 		if constexpr (std::is_same<TTracks2,aod::CF2ProngTracks>::value){
-			//if (track1.globalIndex() == track2.prong0Id())
+			if (track1.globalIndex() == track2.cfTrackProng0Id() || track1.globalIndex() == track2.cfTrackProng1Id()) //do not correlate daughter tracks of the same event
+				continue;
 		}
 
         if constexpr (step <= CorrelationContainer::kCFStepTracked) {
@@ -419,7 +425,7 @@ struct CorrelationTask {
   }
   PROCESS_SWITCH(CorrelationTask, processSameDerived, "Process same event on derived data", false);
 
-  void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, aod::CF2ProngTracks const& p2tracks){
+  void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, soa::Filtered<aod::CF2ProngTracks> const& p2tracks){
     loadEfficiency(collision.timestamp());
 
     const auto multiplicity = collision.multiplicity();
@@ -433,7 +439,7 @@ struct CorrelationTask {
 
     if (cfg.mEfficiencyAssociated || cfg.mEfficiencyTrigger) {
       same->fillEvent(multiplicity, CorrelationContainer::kCFStepCorrected);
-      fillCorrelations<CorrelationContainer::kCFStepCorrected>(same, tracks, tracks, multiplicity, collision.posZ(), 0, 1.0f);
+      fillCorrelations<CorrelationContainer::kCFStepCorrected>(same, tracks, p2tracks, multiplicity, collision.posZ(), 0, 1.0f);
     }
   }
   PROCESS_SWITCH(CorrelationTask, processSame2ProngDerived, "Process same event on derived data", false);
