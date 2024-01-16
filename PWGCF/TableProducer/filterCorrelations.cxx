@@ -95,28 +95,14 @@ struct FilterCF {
     return false;
   }
 
+  //void processData(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Filtered<soa::Join<aod::Tracks, aod::TrackSelection>> const& tracks)
   void processData(soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks)
   {
-    /*outputCollRefs(-1);
-    for (auto& track : tracks) {
-        (void)track;
-        outputTrackRefs(-1);
-      }
-    return;*/
-	//
     if (cfgVerbosity > 0) {
       LOGF(info, "processData: Tracks for collision: %d | Vertex: %.1f (%d) | INT7: %d | Multiplicity: %.1f", tracks.size(), collision.posZ(), collision.flags(), collision.sel7(), collision.multiplicity());
     }
 
-    if (std::abs(collision.posZ()) >= cfgCutVertex || (cfgCollisionFlags != 0 && ((collision.flags() & cfgCollisionFlags) != cfgCollisionFlags))
-		|| !keepCollision(collision)){
-		if(cfgTransientTables){
-			outputCollRefs(-1);
-			for(auto &track : tracks){
-				(void)track;
-				outputTrackRefs(-1);
-			}
-		}
+    if (!keepCollision(collision)){
       return;
 	 }
 
@@ -124,16 +110,9 @@ struct FilterCF {
     outputCollisions(bc.runNumber(), collision.posZ(), collision.multiplicity(), bc.timestamp());
 
     if (cfgTransientTables)
-      outputCollRefs(outputCollisions.lastIndex());
+      outputCollRefs(collision.globalIndex());
 
     for (auto& track : tracks) {
-      if (!track.isGlobalTrack() || !track.isGlobalTrackSDD() ||
-          std::abs(track.eta()) > cfgCutEta || track.pt() < cfgCutPt){
-        if (cfgTransientTables)
-          outputTrackRefs(-1);
-        continue;
-      }
-
       uint8_t trackType = 0;
       if (track.isGlobalTrack()) {
         trackType = 1;
@@ -143,7 +122,8 @@ struct FilterCF {
 
       outputTracks(outputCollisions.lastIndex(), track.pt(), track.eta(), track.phi(), track.sign(), trackType);
       if (cfgTransientTables)
-        outputTrackRefs(outputTracks.lastIndex());
+        outputTrackRefs(collision.globalIndex(),track.globalIndex());
+        //outputTrackRefs(track.globalIndex());
 
       yields->Fill(collision.multiplicity(), track.pt(), track.eta());
       etaphi->Fill(collision.multiplicity(), track.eta(), track.phi());

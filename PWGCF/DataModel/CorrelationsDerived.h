@@ -81,15 +81,22 @@ using CFTracksWithLabel = soa::Join<CFTracks, CFTrackLabels>;
 using CFTrackWithLabel = CFTracksWithLabel::iterator;
 
 //------transient CF-filter to CF-2prong-filter
-DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", cftrack::CFCollisionId); //! Transient cf collision index table
+namespace cfcollref
+{
+DECLARE_SOA_INDEX_COLUMN(Collision,collision);
+} // namespace cftrackref
+DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", o2::soa::Index<>, cfcollref::CollisionId); //! Transient cf collision index table
 
 using CFCollRef = CFCollRefs::iterator;
 
 namespace cftrackref
 {
-DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
+DECLARE_SOA_INDEX_COLUMN(Collision,collision);
+DECLARE_SOA_INDEX_COLUMN(Track,track);
+//DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
 } // namespace cftrackref
-DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", cftrackref::CFTrackId); //! Transient cf track index table
+DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", o2::soa::Index<>, cftrackref::CollisionId, cftrackref::TrackId); //! Transient cf track index table
+//DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", track::CollisionId); //! Transient cf track index table
 
 using CFTrackRef = CFTrackRefs::iterator;
 //------
