@@ -123,7 +123,6 @@ struct FilterCF {
       outputTracks(outputCollisions.lastIndex(), track.pt(), track.eta(), track.phi(), track.sign(), trackType);
       if (cfgTransientTables)
         outputTrackRefs(collision.globalIndex(),track.globalIndex());
-        //outputTrackRefs(track.globalIndex());
 
       yields->Fill(collision.multiplicity(), track.pt(), track.eta());
       etaphi->Fill(collision.multiplicity(), track.eta(), track.phi());

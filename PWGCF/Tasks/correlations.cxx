@@ -31,6 +31,7 @@
 #include <cmath>
 #include <TDirectory.h>
 #include <THn.h>
+#include <experimental/type_traits>
 
 using namespace o2;
 using namespace o2::framework;
@@ -229,8 +230,11 @@ struct CorrelationTask {
     return true;
   }
 
-  template <CorrelationContainer::CFStep step, typename TTarget, typename TTracks>
-  void fillCorrelations(TTarget target, TTracks& tracks1, TTracks& tracks2, float multiplicity, float posZ, int magField, float eventWeight)
+  template<class T>
+  using hasSign = decltype(std::declval<T&>().sign());
+
+  template <CorrelationContainer::CFStep step, typename TTarget, typename TTracks1, typename TTracks2>
+  void fillCorrelations(TTarget target, TTracks1& tracks1, TTracks2& tracks2, float multiplicity, float posZ, int magField, float eventWeight)
   {
     // Cache efficiency for particles (too many FindBin lookups)
     float* efficiencyAssociated = nullptr;
@@ -267,10 +271,15 @@ struct CorrelationTask {
       target->getTriggerHist()->Fill(step, track1.pt(), multiplicity, posZ, triggerWeight);
 
       for (auto& track2 : tracks2) {
-        if (track1.globalIndex() == track2.globalIndex()) {
-          // LOGF(info, "Track identical: %f | %f | %f || %f | %f | %f", track1.eta(), track1.phi(), track1.pt(),  track2.eta(), track2.phi(), track2.pt());
-          continue;
-        }
+		if constexpr (std::is_same<TTracks1,TTracks2>::value){
+			if (track1.globalIndex() == track2.globalIndex()) {
+			  // LOGF(info, "Track identical: %f | %f | %f || %f | %f | %f", track1.eta(), track1.phi(), track1.pt(),  track2.eta(), track2.phi(), track2.pt());
+			  continue;
+			}
+		}
+		if constexpr (std::is_same<TTracks2,aod::CF2ProngTracks>::value){
+			//if (track1.globalIndex() == track2.prong0Id())
+		}
 
         if constexpr (step <= CorrelationContainer::kCFStepTracked) {
           if (!checkObject<step>(track2)) {
@@ -282,22 +291,27 @@ struct CorrelationTask {
           continue;
         }
 
-        if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
-          continue;
-        }
-        if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
-          continue;
-        }
+		if constexpr (std::experimental::is_detected<hasSign,TTracks2>::value){
+			if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
+			  continue;
+			}
+			if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
+			  continue;
+			}
+		}
 
-        if constexpr (step >= CorrelationContainer::kCFStepReconstructed) {
-          if (cfg.mPairCuts && mPairCuts.conversionCuts(track1, track2)) {
-            continue;
-          }
+		if constexpr (std::is_same<TTracks1,TTracks2>::value){
+			if constexpr (step >= CorrelationContainer::kCFStepReconstructed) {
+			  if (cfg.mPairCuts && mPairCuts.conversionCuts(track1, track2)) {
+				continue;
+			  }
 
-          if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
-            continue;
-          }
-        }
+			  if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
+				continue;
+			  }
+			}
+		}
+
 
         float associatedWeight = triggerWeight;
         if constexpr (step == CorrelationContainer::kCFStepCorrected) {
@@ -404,6 +418,25 @@ struct CorrelationTask {
     }
   }
   PROCESS_SWITCH(CorrelationTask, processSameDerived, "Process same event on derived data", false);
+
+  void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, aod::CF2ProngTracks const& p2tracks){
+    loadEfficiency(collision.timestamp());
+
+    const auto multiplicity = collision.multiplicity();
+
+    int bin = configurableBinningDerived.getBin({collision.posZ(), collision.multiplicity()});
+    registry.fill(HIST("eventcount_same"), bin);
+    fillQA(collision, multiplicity, tracks);
+
+    same->fillEvent(multiplicity, CorrelationContainer::kCFStepReconstructed);
+    fillCorrelations<CorrelationContainer::kCFStepReconstructed>(same, tracks, p2tracks, multiplicity, collision.posZ(), 0, 1.0f);
+
+    if (cfg.mEfficiencyAssociated || cfg.mEfficiencyTrigger) {
+      same->fillEvent(multiplicity, CorrelationContainer::kCFStepCorrected);
+      fillCorrelations<CorrelationContainer::kCFStepCorrected>(same, tracks, tracks, multiplicity, collision.posZ(), 0, 1.0f);
+    }
+  }
+  PROCESS_SWITCH(CorrelationTask, processSame2ProngDerived, "Process same event on derived data", false);
 
   using BinningTypeAOD = ColumnBinningPolicy<aod::collision::PosZ, aod::cent::CentRun2V0M>;
   void processMixedAOD(aodCollisions& collisions, aodTracks const& tracks, aod::BCsWithTimestamps const&)

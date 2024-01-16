@@ -74,16 +74,14 @@ struct FilterCF2Prong{
 					break;
 				}
 			}
-			(void)prongCFId[0];
-			(void)prongCFId[1];
-			if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) == 0) // TODO <--- make configurable
-				continue;
+			//if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) == 0) // TODO <--- make configurable
+			//	continue;
 			//look-up the collision id
 			auto collisionId = cfcollisions.begin().globalIndex();
 			if(cfgVerbosity > 0)
 				LOGF(info,"Accepting candidate %lu\n",c.globalIndex());
 			output2ProngTracks(collisionId,
-				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), 0u); //<-- selection mask
+				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), c.hfflag());
 		}
 	}
 	PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);
