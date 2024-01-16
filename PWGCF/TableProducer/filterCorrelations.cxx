@@ -79,7 +79,7 @@ struct FilterCF {
   Produces<aod::CFMcCollisions> outputMcCollisions;
   Produces<aod::CFMcParticles> outputMcParticles;
 
-  Produces<aod::CFCollRefs> outputCollRefs; 
+  Produces<aod::CFCollRefs> outputCollRefs;
   Produces<aod::CFTrackRefs> outputTrackRefs;
 
   template <typename TCollision>
@@ -95,16 +95,16 @@ struct FilterCF {
     return false;
   }
 
-  //void processData(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Filtered<soa::Join<aod::Tracks, aod::TrackSelection>> const& tracks)
+  // void processData(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Filtered<soa::Join<aod::Tracks, aod::TrackSelection>> const& tracks)
   void processData(soa::Join<aod::Collisions, aod::EvSels, aod::CFMultiplicities>::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks)
   {
     if (cfgVerbosity > 0) {
       LOGF(info, "processData: Tracks for collision: %d | Vertex: %.1f (%d) | INT7: %d | Multiplicity: %.1f", tracks.size(), collision.posZ(), collision.flags(), collision.sel7(), collision.multiplicity());
     }
 
-    if (!keepCollision(collision)){
+    if (!keepCollision(collision)) {
       return;
-	 }
+    }
 
     auto bc = collision.bc_as<aod::BCsWithTimestamps>();
     outputCollisions(bc.runNumber(), collision.posZ(), collision.multiplicity(), bc.timestamp());
@@ -122,7 +122,7 @@ struct FilterCF {
 
       outputTracks(outputCollisions.lastIndex(), track.pt(), track.eta(), track.phi(), track.sign(), trackType);
       if (cfgTransientTables)
-        outputTrackRefs(collision.globalIndex(),track.globalIndex());
+        outputTrackRefs(collision.globalIndex(), track.globalIndex());
 
       yields->Fill(collision.multiplicity(), track.pt(), track.eta());
       etaphi->Fill(collision.multiplicity(), track.eta(), track.phi());

@@ -106,7 +106,7 @@ struct CorrelationTask {
   Filter cfMCParticleFilter = (nabs(aod::cfmcparticle::eta) < cfgCutEta) && (aod::cfmcparticle::pt > cfgCutPt) && (aod::cfmcparticle::sign != 0);
 
   // HF filters
-  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt) && (cfgDecayParticleMask == 0 || cfgDecayParticleMask&aod::cf2prongtrack::mask != 0);
+  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt); // && (cfgDecayParticleMask == 0 || (uint8_t)cfgDecayParticleMask&aod::cf2prongtrack::mask != 0);
 
   // Output definitions
   OutputObj<CorrelationContainer> same{"sameEvent"};
@@ -235,7 +235,7 @@ struct CorrelationTask {
     return true;
   }
 
-  template<class T>
+  template <class T>
   using hasSign = decltype(std::declval<T&>().sign());
 
   template <CorrelationContainer::CFStep step, typename TTarget, typename TTracks1, typename TTracks2>
@@ -276,16 +276,16 @@ struct CorrelationTask {
       target->getTriggerHist()->Fill(step, track1.pt(), multiplicity, posZ, triggerWeight);
 
       for (auto& track2 : tracks2) {
-		if constexpr (std::is_same<TTracks1,TTracks2>::value){
-			if (track1.globalIndex() == track2.globalIndex()) {
-			  // LOGF(info, "Track identical: %f | %f | %f || %f | %f | %f", track1.eta(), track1.phi(), track1.pt(),  track2.eta(), track2.phi(), track2.pt());
-			  continue;
-			}
-		}
-		if constexpr (std::is_same<TTracks2,aod::CF2ProngTracks>::value){
-			if (track1.globalIndex() == track2.cfTrackProng0Id() || track1.globalIndex() == track2.cfTrackProng1Id()) //do not correlate daughter tracks of the same event
-				continue;
-		}
+        if constexpr (std::is_same<TTracks1, TTracks2>::value) {
+          if (track1.globalIndex() == track2.globalIndex()) {
+            // LOGF(info, "Track identical: %f | %f | %f || %f | %f | %f", track1.eta(), track1.phi(), track1.pt(),  track2.eta(), track2.phi(), track2.pt());
+            continue;
+          }
+        }
+        if constexpr (std::is_same<TTracks2, aod::CF2ProngTracks>::value) {
+          if (track1.globalIndex() == track2.cfTrackProng0Id() || track1.globalIndex() == track2.cfTrackProng1Id()) // do not correlate daughter tracks of the same event
+            continue;
+        }
 
         if constexpr (step <= CorrelationContainer::kCFStepTracked) {
           if (!checkObject<step>(track2)) {
@@ -297,27 +297,26 @@ struct CorrelationTask {
           continue;
         }
 
-		if constexpr (std::experimental::is_detected<hasSign,TTracks2>::value){
-			if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
-			  continue;
-			}
-			if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
-			  continue;
-			}
-		}
+        if constexpr (std::experimental::is_detected<hasSign, TTracks2>::value) {
+          if (cfgAssociatedCharge != 0 && cfgAssociatedCharge * track2.sign() < 0) {
+            continue;
+          }
+          if (cfgPairCharge != 0 && cfgPairCharge * track1.sign() * track2.sign() < 0) {
+            continue;
+          }
+        }
 
-		if constexpr (std::is_same<TTracks1,TTracks2>::value){
-			if constexpr (step >= CorrelationContainer::kCFStepReconstructed) {
-			  if (cfg.mPairCuts && mPairCuts.conversionCuts(track1, track2)) {
-				continue;
-			  }
+        if constexpr (std::is_same<TTracks1, TTracks2>::value) {
+          if constexpr (step >= CorrelationContainer::kCFStepReconstructed) {
+            if (cfg.mPairCuts && mPairCuts.conversionCuts(track1, track2)) {
+              continue;
+            }
 
-			  if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
-				continue;
-			  }
-			}
-		}
-
+            if (cfgTwoTrackCut > 0 && mPairCuts.twoTrackCut(track1, track2, magField)) {
+              continue;
+            }
+          }
+        }
 
         float associatedWeight = triggerWeight;
         if constexpr (step == CorrelationContainer::kCFStepCorrected) {
@@ -425,7 +424,8 @@ struct CorrelationTask {
   }
   PROCESS_SWITCH(CorrelationTask, processSameDerived, "Process same event on derived data", false);
 
-  void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, soa::Filtered<aod::CF2ProngTracks> const& p2tracks){
+  void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, soa::Filtered<aod::CF2ProngTracks> const& p2tracks)
+  {
     loadEfficiency(collision.timestamp());
 
     const auto multiplicity = collision.multiplicity();

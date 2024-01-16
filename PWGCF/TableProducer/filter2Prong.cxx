@@ -36,61 +36,62 @@ using namespace o2::math_utils::detail;
 #define FLOAT_PRECISION 0xFFFFFFF0
 #define O2_DEFINE_CONFIGURABLE(NAME, TYPE, DEFAULT, HELP) Configurable<TYPE> NAME{#NAME, DEFAULT, HELP};
 
-struct FilterCF2Prong{
-	O2_DEFINE_CONFIGURABLE(cfgVerbosity, int, 1, "Verbosity level (0 = major, 1 = per collision)")
+struct FilterCF2Prong {
+  O2_DEFINE_CONFIGURABLE(cfgVerbosity, int, 1, "Verbosity level (0 = major, 1 = per collision)")
 
-	Produces<aod::CF2ProngTracks> output2ProngTracks;
+  Produces<aod::CF2ProngTracks> output2ProngTracks;
 
-	void init(InitContext& context){
-		LOGF(info,"FilterCF2Prong initialized\n");
-		printf("FilterCF2Prong initialized\n");
-	}
+  void init(InitContext& context)
+  {
+    LOGF(info, "FilterCF2Prong initialized\n");
+    printf("FilterCF2Prong initialized\n");
+  }
 
-	using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
-	//------
-	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
-	void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, HFCandidates const& candidates){
-	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
-	//void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
-	//------
-		if(cftracks.size() <= 0)
-			return; //rejected collision
-		if (cfgVerbosity > 0 && candidates.size() > 0)
-			LOGF(info, "processData2Prong: Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(),cfcollisions.size(),cftracks.size());
-		for(auto &c : candidates){
-			std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type prongCFId[2] = {-1,-1};
-			for(auto &cftrack : cftracks){
-				if(c.prong0Id() == cftrack.trackId()){ //cftrack.track_as<aod::CFTrackRefs>()){
-					prongCFId[0] = cftrack.globalIndex();
-					//LOGF(info,"  found candidate prong1 %lu\n",prongCFId[0]);
-					break;
-				}
-			}
-			for(auto &cftrack : cftracks){
-				//if(c.prong1Id() == cftrack.track_as<aod::CFTrackRefs>().trackId()){
-				if(c.prong1Id() == cftrack.trackId()){ //cftrack.track_as<aod::CFTrackRefs>().trackId()){
-					prongCFId[1] = cftrack.globalIndex();
-					//LOGF(info,"  found candidate prong2 %lu\n",prongCFId[1]);
-					break;
-				}
-			}
-			//look-up the collision id
-			auto collisionId = cfcollisions.begin().globalIndex();
-			if(cfgVerbosity > 0)
-				LOGF(info,"Accepting candidate %lu\n",c.globalIndex());
-			uint8_t m = 0u;
-			if((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) != 0)
-				m |= aod::cf2prongtrack::kD0ToPiK;
-			output2ProngTracks(collisionId,
-				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), m);
-		}
-	}
-	PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);
-}; //struct
+  using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
+  //------
+  // void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
+  void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, HFCandidates const& candidates)
+  {
+    // void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
+    // void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
+    //------
+    if (cftracks.size() <= 0)
+      return; // rejected collision
+    if (cfgVerbosity > 0 && candidates.size() > 0)
+      LOGF(info, "processData2Prong: Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(), cfcollisions.size(), cftracks.size());
+    for (auto& c : candidates) {
+      std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type prongCFId[2] = {-1, -1};
+      for (auto& cftrack : cftracks) {
+        if (c.prong0Id() == cftrack.trackId()) { // cftrack.track_as<aod::CFTrackRefs>()){
+          prongCFId[0] = cftrack.globalIndex();
+          // LOGF(info,"  found candidate prong1 %lu\n",prongCFId[0]);
+          break;
+        }
+      }
+      for (auto& cftrack : cftracks) {
+        // if(c.prong1Id() == cftrack.track_as<aod::CFTrackRefs>().trackId()){
+        if (c.prong1Id() == cftrack.trackId()) { // cftrack.track_as<aod::CFTrackRefs>().trackId()){
+          prongCFId[1] = cftrack.globalIndex();
+          // LOGF(info,"  found candidate prong2 %lu\n",prongCFId[1]);
+          break;
+        }
+      }
+      // look-up the collision id
+      auto collisionId = cfcollisions.begin().globalIndex();
+      if (cfgVerbosity > 0)
+        LOGF(info, "Accepting candidate %lu\n", c.globalIndex());
+      uint8_t m = 0u;
+      if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) != 0)
+        m |= aod::cf2prongtrack::kD0ToPiK;
+      output2ProngTracks(collisionId,
+                         prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), m);
+    }
+  }
+  PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);
+}; // struct
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
     adaptAnalysisTask<FilterCF2Prong>(cfgc)};
 }
-
