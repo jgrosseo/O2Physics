@@ -47,58 +47,44 @@ struct FilterCF2Prong{
 	}
 
 	using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
-	//void processData(aod::Collisions::iterator const& collision, soa::Join<aod::CFCollisions, aod::CFCollRefs> const& cfcollisions, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, soa::Join<aod::CFTracks, aod::CFTrackRefs> const& cftracks, HFCandidates const& candidates){ //<-- ok, works, but no cftracks
-	//void processData(soa::Join<aod::CFCollisions, aod::CFCollRefs>::iterator const& cfcollision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, soa::Join<aod::CFTracks, aod::CFTrackRefs> const& cftracks, HFCandidates const& candidates){
-	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, soa::Join<aod::CFTracks, aod::CFTrackRefs> const& cftracks, HFCandidates const& candidates){ //<--- ok, works, but no cftracks
 	//------
 	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
-	void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
-	//void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){ //try Preslice the candidates with cfcollision.CollRef.globalIndex
-	//Preslice<HFCandidates> perCollision = aod::hf_cand::collisionId;
-	//void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){ //try Preslice the candidates with cfcollision.CollRef.globalIndex
+	void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
+	//void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
+	//void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
 	//------
-		/*auto collId = collision.cfCollision_as<aod::CFCollRefs>().cfCollisionId();
-		if(collId < 0){
-			LOGF(info,"rejecting collision\n");
-			return;
-		}*/
-		/*for(auto &c : cfcollisions){
-			auto cs = candidates.sliceBy(perCollision,c.collision_as<aod::CFCollRefs>().collisionId());
-			printf("c: candidates: %u\n",cs.size());
-		}*/
 		if(cftracks.size() <= 0)
-			return;
-		if (cfgVerbosity > 0) {
-			if(candidates.size() > 0)
-				//LOGF(info, "processData2Prong: Candidates for collision: %u, cfcolls: %u, Tracks: %u, CFTracks: %u\n", candidates.size(),cfcollisions.size(),tracks.size(),cftracks.size());
-				//LOGF(info, "processData2Prong: Candidates for collision: %u, cfcollisions: %u, Tracks: %u, CFTracks: %u\n", candidates.size(),cfcollisions.size(),tracks.size(),cftracks.size());
-				LOGF(info, "processData2Prong: Candidates for collision: %u, cfcollisions: %u, CFTracks: %u\n", candidates.size(),cfcollisions.size(),cftracks.size());
-		}
-		/*int prongCFId[2] = {-1,-1};
-		for(auto &track : tracks){
-			for(auto &c : candidates)
-				if(c.prong0Id() == track.index()){
-					//prongCFId[0] = track.cfTrack.index();
-					//track.cfTrack().index();
-					//track.cfTrackId();
-					//track.cfTrack_as<aod::CFTrackRefs>().index();
-					prongCFId[0] = track.cfTrack_as<aod::CFTrackRefs>().cfTrackId();
-					//track.template cfTrack_as<aod::CFTrackRefs>().cfTrackId();
-					//track.cfTrack().index();
+			return; //rejected collision
+		if (cfgVerbosity > 0 && candidates.size() > 0)
+			LOGF(info, "processData2Prong: Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(),cfcollisions.size(),cftracks.size());
+		for(auto &c : candidates){
+			std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type prongCFId[2] = {-1,-1};
+			for(auto &cftrack : cftracks){
+				if(c.prong0Id() == cftrack.trackId()){ //cftrack.track_as<aod::CFTrackRefs>()){
+					prongCFId[0] = cftrack.globalIndex();
+					//LOGF(info,"  found candidate prong1 %lu\n",prongCFId[0]);
 					break;
 				}
-			for(auto &c : candidates)
-				if(c.prong1Id() == track.index()){
-					prongCFId[1] = track.cfTrack_as<aod::CFTrackRefs>().cfTrackId();
+			}
+			for(auto &cftrack : cftracks){
+				//if(c.prong1Id() == cftrack.track_as<aod::CFTrackRefs>().trackId()){
+				if(c.prong1Id() == cftrack.trackId()){ //cftrack.track_as<aod::CFTrackRefs>().trackId()){
+					prongCFId[1] = cftrack.globalIndex();
+					//LOGF(info,"  found candidate prong2 %lu\n",prongCFId[1]);
 					break;
 				}
-		}
-		for (auto& c : candidates) {
+			}
+			(void)prongCFId[0];
+			(void)prongCFId[1];
 			if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) == 0) // TODO <--- make configurable
 				continue;
-			output2ProngTracks(collision.cfCollision_as<aod::CFCollRefs>().cfCollisionId(),
+			//look-up the collision id
+			auto collisionId = cfcollisions.begin().globalIndex();
+			if(cfgVerbosity > 0)
+				LOGF(info,"Accepting candidate %lu\n",c.globalIndex());
+			output2ProngTracks(collisionId,
 				 prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), 0u); //<-- selection mask
-		 }*/
+		}
 	}
 	PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);
 }; //struct
