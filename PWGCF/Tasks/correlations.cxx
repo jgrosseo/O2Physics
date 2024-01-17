@@ -106,7 +106,7 @@ struct CorrelationTask {
   Filter cfMCParticleFilter = (nabs(aod::cfmcparticle::eta) < cfgCutEta) && (aod::cfmcparticle::pt > cfgCutPt) && (aod::cfmcparticle::sign != 0);
 
   // HF filters
-  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt) && (cfgDecayParticleMask == 0 || ((uint8_t)cfgDecayParticleMask&aod::cf2prongtrack::mask) != (uint8_t)0u);
+  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt) && (cfgDecayParticleMask == 0 || ((uint8_t)cfgDecayParticleMask & aod::cf2prongtrack::mask) != (uint8_t)0u);
 
   // Output definitions
   OutputObj<CorrelationContainer> same{"sameEvent"};
@@ -134,10 +134,10 @@ struct CorrelationTask {
   {
     registry.add("yields", "multiplicity/centrality vs pT vs eta", {HistType::kTH3F, {{100, 0, 100, "/multiplicity/centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
     registry.add("etaphi", "multiplicity/centrality vs eta vs phi", {HistType::kTH3F, {{100, 0, 100, "multiplicity/centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
-	if(doprocessSame2ProngDerived){
-		registry.add("yieldsTrack2", "multiplicity/centrality vs pT vs eta (track2)", {HistType::kTH3F, {{100, 0, 100, "/multiplicity/centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
-		registry.add("etaphiTrack2", "multiplicity/centrality vs eta vs phi (track2)", {HistType::kTH3F, {{100, 0, 100, "multiplicity/centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
-	}
+    if (doprocessSame2ProngDerived) {
+      registry.add("yieldsTrack2", "multiplicity/centrality vs pT vs eta (track2)", {HistType::kTH3F, {{100, 0, 100, "/multiplicity/centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
+      registry.add("etaphiTrack2", "multiplicity/centrality vs eta vs phi (track2)", {HistType::kTH3F, {{100, 0, 100, "multiplicity/centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
+    }
 
     const int maxMixBin = AxisSpec(axisMultiplicity).getNbins() * AxisSpec(axisVertex).getNbins();
     registry.add("eventcount_same", "bin", {HistType::kTH1F, {{maxMixBin + 2, -2.5, -0.5 + maxMixBin, "bin"}}});
@@ -203,7 +203,7 @@ struct CorrelationTask {
   }
 
   template <typename TCollision, typename TTracks>
-  void fillQA(const TCollision &collision, float multiplicity, const TTracks &tracks)
+  void fillQA(const TCollision& collision, float multiplicity, const TTracks& tracks)
   {
     for (auto& track1 : tracks) {
       registry.fill(HIST("yields"), multiplicity, track1.pt(), track1.eta());
@@ -212,9 +212,9 @@ struct CorrelationTask {
   }
 
   template <typename TCollision, typename TTracks1, typename TTracks2>
-  void fillQA(const TCollision &collision, float multiplicity, const TTracks1 &tracks1, const TTracks2 &tracks2)
+  void fillQA(const TCollision& collision, float multiplicity, const TTracks1& tracks1, const TTracks2& tracks2)
   {
-	fillQA(collision,multiplicity,tracks1);
+    fillQA(collision, multiplicity, tracks1);
     for (auto& track2 : tracks2) {
       registry.fill(HIST("yieldsTrack2"), multiplicity, track2.pt(), track2.eta());
       registry.fill(HIST("etaphiTrack2"), multiplicity, track2.eta(), track2.phi());
