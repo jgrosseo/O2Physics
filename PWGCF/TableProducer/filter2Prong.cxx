@@ -12,7 +12,6 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Framework/ASoAHelpers.h"
-#include "Framework/O2DatabasePDGPlugin.h"
 
 #include "MathUtils/detail/TypeTruncation.h"
 
@@ -21,9 +20,6 @@
 #include "PWGHF/Core/HfHelper.h"
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
-
-#include <TH3F.h>
-#include <TDatabasePDG.h>
 
 using namespace o2;
 using namespace o2::framework;
@@ -61,16 +57,14 @@ struct FilterCF2Prong {
       }
       // look-up the collision id
       auto collisionId = cfcollisions.begin().globalIndex();
-      if (cfgVerbosity > 0)
-        LOGF(info, "Accepting candidate %lu\n", c.globalIndex());
       uint8_t m = 0u;
-      if ((c.hfflag() & 1 << aod::hf_cand_2prong::DecayType::D0ToPiK) != 0)
+      if ((c.hfflag() & (1 << aod::hf_cand_2prong::DecayType::D0ToPiK)) != 0)
         m |= aod::cf2prongtrack::kD0ToPiK;
       output2ProngTracks(collisionId,
                          prongCFId[0], prongCFId[1], c.pt(), c.eta(), c.phi(), m);
     }
   }
-  PROCESS_SWITCH(FilterCF2Prong, processData, "Process data", true);
+  PROCESS_SWITCH(FilterCF2Prong, processData, "Process data D0 candidates", true);
 }; // struct
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)

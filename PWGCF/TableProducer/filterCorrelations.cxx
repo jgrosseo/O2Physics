@@ -275,7 +275,7 @@ struct MultiplicitySelector {
   {
     output(tracks.size());
   }
-  PROCESS_SWITCH(MultiplicitySelector, processTracks, "Select track count as multiplicity", true);
+  PROCESS_SWITCH(MultiplicitySelector, processTracks, "Select track count as multiplicity", false);
 
   void processRun2V0M(aod::CentRun2V0Ms const& centralities)
   {
@@ -283,7 +283,7 @@ struct MultiplicitySelector {
       output(c.centRun2V0M());
     }
   }
-  PROCESS_SWITCH(MultiplicitySelector, processRun2V0M, "Select V0M centrality as multiplicity", false);
+  PROCESS_SWITCH(MultiplicitySelector, processRun2V0M, "Select V0M centrality as multiplicity", true);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)

@@ -736,7 +736,7 @@ struct CorrelationTask {
       //      This also means that if a MC collision had several reconstructed vertices (collisions), all of them are filled
     }
   }
-  PROCESS_SWITCH(CorrelationTask, processMCMixedDerived, "Process MC mixed events on derived data", true);
+  PROCESS_SWITCH(CorrelationTask, processMCMixedDerived, "Process MC mixed events on derived data", false);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
