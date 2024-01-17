@@ -106,7 +106,7 @@ struct CorrelationTask {
   Filter cfMCParticleFilter = (nabs(aod::cfmcparticle::eta) < cfgCutEta) && (aod::cfmcparticle::pt > cfgCutPt) && (aod::cfmcparticle::sign != 0);
 
   // HF filters
-  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt); // && (cfgDecayParticleMask == 0 || (uint8_t)cfgDecayParticleMask&aod::cf2prongtrack::mask != 0);
+  Filter track2pFilter = (aod::cf2prongtrack::eta < cfgCutEta) && (aod::cf2prongtrack::pt > cfgCutPt) && (cfgDecayParticleMask == 0 || ((uint8_t)cfgDecayParticleMask&aod::cf2prongtrack::mask) != (uint8_t)0u);
 
   // Output definitions
   OutputObj<CorrelationContainer> same{"sameEvent"};

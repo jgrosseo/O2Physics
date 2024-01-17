@@ -96,10 +96,8 @@ using CFTrackRef = CFTrackRefs::iterator;
 
 namespace cf2prongtrack
 {
-DECLARE_SOA_INDEX_COLUMN(CFCollision, cfCollision);                                                                                                     //! Index to collision
-DECLARE_SOA_INDEX_COLUMN(CFMcParticle, cfMCParticle);                                                                                                   //! Index to MC particle
-DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng0, cfTrackProng0, int, CFTracks, "_0"); //! Index to prong 1 track
-DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng1, cfTrackProng1, int, CFTracks, "_1"); //! Index to prong 1 track
+DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng0, cfTrackProng0, int, CFTracks, "_0"); //! Index to prong 1 CFTrack
+DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng1, cfTrackProng1, int, CFTracks, "_1"); //! Index to prong 2 CFTrack
 // type
 DECLARE_SOA_COLUMN(Pt, pt, float);       //! pT (GeV/c)
 DECLARE_SOA_COLUMN(Eta, eta, float);     //! Pseudorapidity
