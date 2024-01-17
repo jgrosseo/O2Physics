@@ -40,7 +40,7 @@ struct FilterCF2Prong {
     if (cftracks.size() <= 0)
       return; // rejected collision
     if (cfgVerbosity > 0 && candidates.size() > 0)
-      LOGF(info, "Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(), cfcollisions.size(), cftracks.size());
+      LOGF(info, "Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu", candidates.size(), cfcollisions.size(), cftracks.size());
     for (auto& c : candidates) {
       int prongCFId[2] = {-1, -1};
       for (auto& cftrack : cftracks) {
