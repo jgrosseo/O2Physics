@@ -17,9 +17,6 @@
 #include "MathUtils/detail/TypeTruncation.h"
 
 #include "PWGCF/DataModel/CorrelationsDerived.h"
-#include "Common/DataModel/EventSelection.h"
-#include "Common/DataModel/TrackSelectionTables.h"
-#include "Common/DataModel/Centrality.h"
 
 #include "PWGHF/Core/HfHelper.h"
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
@@ -41,38 +38,24 @@ struct FilterCF2Prong {
 
   Produces<aod::CF2ProngTracks> output2ProngTracks;
 
-  void init(InitContext& context)
-  {
-    LOGF(info, "FilterCF2Prong initialized\n");
-    printf("FilterCF2Prong initialized\n");
-  }
-
   using HFCandidates = soa::Join<aod::HfCand2Prong, aod::HfSelD0>;
-  //------
-  // void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
   void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, aod::CFTrackRefs const& cftracks, HFCandidates const& candidates)
   {
-    // void processData(aod::Collisions::iterator const& collision, aod::BCsWithTimestamps const&, aod::CFCollRefs const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, HFCandidates const& candidates){
-    // void processData(soa::Join<aod::CFCollRefs, aod::CFCollisions> const& cfcollisions, soa::Join<aod::CFTrackRefs, aod::CFTracks> const& cftracks, soa::Join<aod::Tracks, aod::TrackSelection> const& tracks, HFCandidates const& candidates){
-    //------
     if (cftracks.size() <= 0)
       return; // rejected collision
     if (cfgVerbosity > 0 && candidates.size() > 0)
-      LOGF(info, "processData2Prong: Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(), cfcollisions.size(), cftracks.size());
+      LOGF(info, "Candidates for collision: %lu, cfcollisions: %lu, CFTracks: %lu\n", candidates.size(), cfcollisions.size(), cftracks.size());
     for (auto& c : candidates) {
-      std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type prongCFId[2] = {-1, -1};
+      int prongCFId[2] = {-1, -1};
       for (auto& cftrack : cftracks) {
-        if (c.prong0Id() == cftrack.trackId()) { // cftrack.track_as<aod::CFTrackRefs>()){
+        if (c.prong0Id() == cftrack.trackId()) {
           prongCFId[0] = cftrack.globalIndex();
-          // LOGF(info,"  found candidate prong1 %lu\n",prongCFId[0]);
           break;
         }
       }
       for (auto& cftrack : cftracks) {
-        // if(c.prong1Id() == cftrack.track_as<aod::CFTrackRefs>().trackId()){
-        if (c.prong1Id() == cftrack.trackId()) { // cftrack.track_as<aod::CFTrackRefs>().trackId()){
+        if (c.prong1Id() == cftrack.trackId()) {
           prongCFId[1] = cftrack.globalIndex();
-          // LOGF(info,"  found candidate prong2 %lu\n",prongCFId[1]);
           break;
         }
       }

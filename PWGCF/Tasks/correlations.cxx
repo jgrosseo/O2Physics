@@ -134,6 +134,10 @@ struct CorrelationTask {
   {
     registry.add("yields", "multiplicity/centrality vs pT vs eta", {HistType::kTH3F, {{100, 0, 100, "/multiplicity/centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
     registry.add("etaphi", "multiplicity/centrality vs eta vs phi", {HistType::kTH3F, {{100, 0, 100, "multiplicity/centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
+	if(doprocessSame2ProngDerived){
+		registry.add("yieldsTrack2", "multiplicity/centrality vs pT vs eta (track2)", {HistType::kTH3F, {{100, 0, 100, "/multiplicity/centrality"}, {40, 0, 20, "p_{T}"}, {100, -2, 2, "#eta"}}});
+		registry.add("etaphiTrack2", "multiplicity/centrality vs eta vs phi (track2)", {HistType::kTH3F, {{100, 0, 100, "multiplicity/centrality"}, {100, -2, 2, "#eta"}, {200, 0, 2 * M_PI, "#varphi"}}});
+	}
 
     const int maxMixBin = AxisSpec(axisMultiplicity).getNbins() * AxisSpec(axisVertex).getNbins();
     registry.add("eventcount_same", "bin", {HistType::kTH1F, {{maxMixBin + 2, -2.5, -0.5 + maxMixBin, "bin"}}});
@@ -199,11 +203,21 @@ struct CorrelationTask {
   }
 
   template <typename TCollision, typename TTracks>
-  void fillQA(TCollision collision, float multiplicity, TTracks tracks)
+  void fillQA(const TCollision &collision, float multiplicity, const TTracks &tracks)
   {
     for (auto& track1 : tracks) {
       registry.fill(HIST("yields"), multiplicity, track1.pt(), track1.eta());
       registry.fill(HIST("etaphi"), multiplicity, track1.eta(), track1.phi());
+    }
+  }
+
+  template <typename TCollision, typename TTracks1, typename TTracks2>
+  void fillQA(const TCollision &collision, float multiplicity, const TTracks1 &tracks1, const TTracks2 &tracks2)
+  {
+	fillQA(collision,multiplicity,tracks1);
+    for (auto& track2 : tracks2) {
+      registry.fill(HIST("yieldsTrack2"), multiplicity, track2.pt(), track2.eta());
+      registry.fill(HIST("etaphiTrack2"), multiplicity, track2.eta(), track2.phi());
     }
   }
 
@@ -426,13 +440,16 @@ struct CorrelationTask {
 
   void processSame2ProngDerived(derivedCollisions::iterator const& collision, soa::Filtered<aod::CFTracks> const& tracks, soa::Filtered<aod::CF2ProngTracks> const& p2tracks)
   {
+    if (cfgVerbosity > 0) {
+      LOGF(info, "processSame2ProngDerived: Tracks for collision: %d | 2-prong candidates: %d | Vertex: %.1f | Multiplicity/Centrality: %.1f", tracks.size(), p2tracks.size(), collision.posZ(), collision.multiplicity());
+    }
     loadEfficiency(collision.timestamp());
 
     const auto multiplicity = collision.multiplicity();
 
     int bin = configurableBinningDerived.getBin({collision.posZ(), collision.multiplicity()});
     registry.fill(HIST("eventcount_same"), bin);
-    fillQA(collision, multiplicity, tracks);
+    fillQA(collision, multiplicity, tracks, p2tracks);
 
     same->fillEvent(multiplicity, CorrelationContainer::kCFStepReconstructed);
     fillCorrelations<CorrelationContainer::kCFStepReconstructed>(same, tracks, p2tracks, multiplicity, collision.posZ(), 0, 1.0f);
@@ -719,7 +736,7 @@ struct CorrelationTask {
       //      This also means that if a MC collision had several reconstructed vertices (collisions), all of them are filled
     }
   }
-  PROCESS_SWITCH(CorrelationTask, processMCMixedDerived, "Process MC mixed events on derived data", false);
+  PROCESS_SWITCH(CorrelationTask, processMCMixedDerived, "Process MC mixed events on derived data", true);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)

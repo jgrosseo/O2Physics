@@ -81,22 +81,15 @@ using CFTracksWithLabel = soa::Join<CFTracks, CFTrackLabels>;
 using CFTrackWithLabel = CFTracksWithLabel::iterator;
 
 //------transient CF-filter to CF-2prong-filter
-namespace cfcollref
-{
-DECLARE_SOA_INDEX_COLUMN(Collision, collision);
-} // namespace cfcollref
-DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", o2::soa::Index<>, cfcollref::CollisionId); //! Transient cf collision index table
+DECLARE_SOA_TABLE(CFCollRefs, "AOD", "CFCOLLREF", o2::soa::Index<>, track::CollisionId); //! Transient cf collision index table
 
 using CFCollRef = CFCollRefs::iterator;
 
 namespace cftrackref
 {
-DECLARE_SOA_INDEX_COLUMN(Collision, collision);
 DECLARE_SOA_INDEX_COLUMN(Track, track);
-// DECLARE_SOA_INDEX_COLUMN(CFTrack, cfTrack); //! CF track index
 } // namespace cftrackref
-DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", o2::soa::Index<>, cftrackref::CollisionId, cftrackref::TrackId); //! Transient cf track index table
-// DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", track::CollisionId); //! Transient cf track index table
+DECLARE_SOA_TABLE(CFTrackRefs, "AOD", "CFTRACKREF", o2::soa::Index<>, track::CollisionId, cftrackref::TrackId); //! Transient cf track index table
 
 using CFTrackRef = CFTrackRefs::iterator;
 //------
@@ -105,8 +98,8 @@ namespace cf2prongtrack
 {
 DECLARE_SOA_INDEX_COLUMN(CFCollision, cfCollision);                                                                                                     //! Index to collision
 DECLARE_SOA_INDEX_COLUMN(CFMcParticle, cfMCParticle);                                                                                                   //! Index to MC particle
-DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng0, cfTrackProng0, std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type, CFTracks, "_0"); //! Index to prong 1 track
-DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng1, cfTrackProng1, std::result_of<decltype (&aod::CFTrack::globalIndex)(aod::CFTrack)>::type, CFTracks, "_1"); //! Index to prong 1 track
+DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng0, cfTrackProng0, int, CFTracks, "_0"); //! Index to prong 1 track
+DECLARE_SOA_INDEX_COLUMN_FULL(CFTrackProng1, cfTrackProng1, int, CFTracks, "_1"); //! Index to prong 1 track
 // type
 DECLARE_SOA_COLUMN(Pt, pt, float);       //! pT (GeV/c)
 DECLARE_SOA_COLUMN(Eta, eta, float);     //! Pseudorapidity
@@ -116,7 +109,7 @@ const uint8_t kD0ToPiK = 0x1;
 } // namespace cf2prongtrack
 DECLARE_SOA_TABLE(CF2ProngTracks, "AOD", "CF2PRONGTRACK", //! Reduced track table
                   o2::soa::Index<>,
-                  cf2prongtrack::CFCollisionId,
+                  cftrack::CFCollisionId,
                   cf2prongtrack::CFTrackProng0Id,
                   cf2prongtrack::CFTrackProng1Id,
                   cf2prongtrack::Pt, cf2prongtrack::Eta, cf2prongtrack::Phi, cf2prongtrack::Mask);
