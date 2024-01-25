@@ -87,7 +87,8 @@ struct AccessMcData {
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
-  return WorkflowSpec{
+  return WorkflowSpec
+  {
     adaptAnalysisTask<VertexDistribution>(cfgc),
-    adaptAnalysisTask<AccessMcData>(cfgc),
-}
+      adaptAnalysisTask<AccessMcData>(cfgc),
+  }
